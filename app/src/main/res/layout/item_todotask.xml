@@ -11,7 +11,7 @@
         android:id="@+id/cb_task_check"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:buttonTint="@color/purple_500"
+        android:button="@drawable/cb_selector"
         android:paddingHorizontal="10dp" />
 
     <TextView
