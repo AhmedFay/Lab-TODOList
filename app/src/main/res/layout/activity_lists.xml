@@ -18,17 +18,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageButton
-            android:id="@+id/btn_back"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/ic_baseline_arrow_back"
-            android:gravity="start" />
+            android:layout_weight="1">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ic_baseline_arrow_back"
+                android:gravity="start" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="2"
             android:gravity="center"
             android:text="Lists ToDO"
             android:textColor="@color/white"
@@ -36,8 +42,9 @@
 
         <TextView
             android:id="@+id/tv_Logout"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:gravity="end"
             android:text="@string/Logout"
             android:textColor="@color/white"
