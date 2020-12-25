@@ -17,7 +17,7 @@ public class SplashActivity extends AppCompatActivity {
 
         TextView tv_splash_next = findViewById(R.id.tv_splash_next);
         tv_splash_next.setOnClickListener(view -> {
-            Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+            Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
             startActivity(intent);
         });
 
