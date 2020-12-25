@@ -66,7 +66,7 @@
         app:layout_constraintTop_toBottomOf="@+id/linear_header" />
 
     <EditText
-        android:id="@+id/et_listCreate"
+        android:id="@+id/et_task_create"
         android:layout_width="match_parent"
         android:layout_height="34dp"
         android:layout_marginHorizontal="20dp"
@@ -87,14 +87,26 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_listTitle" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/listRecycler"
+        android:id="@+id/taskRecycler"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="33dp"
         android:nestedScrollingEnabled="true"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintTop_toBottomOf="@+id/et_listCreate" />
+        app:layout_constraintTop_toBottomOf="@+id/et_task_create" />
+
+    <ProgressBar
+        android:id="@+id/pc_loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="38dp"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/white"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/et_task_create" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

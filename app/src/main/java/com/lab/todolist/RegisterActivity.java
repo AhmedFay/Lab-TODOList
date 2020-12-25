@@ -2,6 +2,7 @@ package com.lab.todolist;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,13 +14,18 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 import com.lab.todolist.Utils.Helpers;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
 
     EditText et_Email, et_Name, et_Password;
     ProgressBar pc_loading;
     private FirebaseAuth firebaseAuth;
+    private FirebaseUser currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,10 +66,23 @@ public class RegisterActivity extends AppCompatActivity {
                         pc_loading.setVisibility(View.GONE);
                         btn_Register.setEnabled(true);
                         if (task.isSuccessful()) {
-                            Toast.makeText(RegisterActivity.this, "Registered successfully", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(RegisterActivity.this, ListsActivity.class);
-                            startActivity(intent);
-                            finish();
+
+                            currentUser = firebaseAuth.getCurrentUser();
+                            String uid = currentUser.getUid();
+                            Map<String, Object> data = new HashMap<>();
+                            data.put("uid", uid);
+                            data.put("name", name);
+                            FirebaseDatabase.getInstance().getReference("Users").child(uid).setValue(data)
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(RegisterActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(RegisterActivity.this, "Registered successfully", Toast.LENGTH_SHORT).show();
+                                        Intent intent = new Intent(RegisterActivity.this, ListsActivity.class);
+                                        startActivity(intent);
+                                        finish();
+                                    });
+
                         } else {
                             Toast.makeText(RegisterActivity.this, "Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
@@ -81,7 +100,7 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        currentUser = firebaseAuth.getCurrentUser();
         if (currentUser != null) {
             Intent intent = new Intent(RegisterActivity.this, ListsActivity.class);
             startActivity(intent);
