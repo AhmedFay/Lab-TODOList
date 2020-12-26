@@ -8,6 +8,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -22,7 +23,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.lab.todolist.Adapters.ListsRecyclerAdapter;
 import com.lab.todolist.Adapters.TaskSearchAdapter;
 import com.lab.todolist.Adapters.TasksRecyclerAdapter;
 import com.lab.todolist.Models.TODOList;
@@ -33,15 +33,17 @@ import com.lab.todolist.Utils.ListPaddingDecoration;
 public class TasksActivity extends AppCompatActivity {
 
     EditText et_task_create;
+    TextView tv_listTitle;
     RecyclerView taskRecycler;
     TasksRecyclerAdapter tasksRecyclerAdapter;
     TaskSearchAdapter taskSearchAdapter;
     TODOList todoList = new TODOList();
     private FirebaseAuth firebaseAuth;
     private FirebaseUser currentUser;
-    private DatabaseReference taskRef;
+    private DatabaseReference listRef;
     private String uid;
     private ProgressBar pc_loading;
+    private TextView tv_delete_list;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,17 +60,16 @@ public class TasksActivity extends AppCompatActivity {
         uid = currentUser.getUid();
 
         String listId = getIntent().getStringExtra("listId");
-        taskRef = FirebaseDatabase.getInstance().getReference("Users").child(uid).child("lists").child(listId);
+        listRef = FirebaseDatabase.getInstance().getReference("Users").child(uid).child("lists").child(listId);
 
         taskRecycler = findViewById(R.id.taskRecycler);
         ListPaddingDecoration dividerItemDecoration = new ListPaddingDecoration(this);
         taskRecycler.addItemDecoration(dividerItemDecoration);
         taskRecycler.setLayoutManager(new LinearLayoutManager(this));
-        tasksRecyclerAdapter = new TasksRecyclerAdapter(TasksActivity.this, todoList);
+        tasksRecyclerAdapter = new TasksRecyclerAdapter(TasksActivity.this, todoList, listRef);
         taskRecycler.setAdapter(tasksRecyclerAdapter);
 
         et_task_create = findViewById(R.id.et_task_create);
-
         et_task_create.setOnEditorActionListener((view, actionId, event) -> {
             if ((event != null && (event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) || (actionId == EditorInfo.IME_ACTION_SEND) || (actionId == EditorInfo.IME_ACTION_DONE)) {
                 Helpers.HideKeyboard(TasksActivity.this);
@@ -84,21 +85,24 @@ public class TasksActivity extends AppCompatActivity {
             return true;
         });
 
+        tv_listTitle = findViewById(R.id.tv_listTitle);
         pc_loading = findViewById(R.id.pc_loading);
         pc_loading.bringToFront();
         pc_loading.setVisibility(View.VISIBLE);
-        taskRef.addValueEventListener(new ValueEventListener() {
+        listRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 pc_loading.setVisibility(View.VISIBLE);
-                todoList.setId((String)dataSnapshot.child("id").getValue());
-                todoList.setTitle((String)dataSnapshot.child("title").getValue());
+                if (!dataSnapshot.exists()) return;
+                todoList.setId((String) dataSnapshot.child("id").getValue());
+                todoList.setTitle((String) dataSnapshot.child("title").getValue());
                 todoList.getTasks().clear();
                 if (dataSnapshot.child("tasks").exists()) {
                     for (DataSnapshot tasksSnapshot : dataSnapshot.child("tasks").getChildren()) {
                         todoList.getTasks().add(tasksSnapshot.getValue(TODOTask.class));
                     }
                 }
+                tv_listTitle.setText(todoList.getTitle() + " List");
                 pc_loading.setVisibility(View.GONE);
                 tasksRecyclerAdapter.notifyDataSetChanged();
             }
@@ -108,6 +112,11 @@ public class TasksActivity extends AppCompatActivity {
             }
         });
 
+        tv_delete_list = findViewById(R.id.tv_delete_list);
+        tv_delete_list.setOnClickListener(view -> {
+            listRef.removeValue();
+            onBackPressed();
+        });
         ImageButton btn_back = findViewById(R.id.btn_back);
         ImageButton btn_search = findViewById(R.id.btn_search);
         btn_back.setOnClickListener(view -> onBackPressed());
@@ -115,9 +124,9 @@ public class TasksActivity extends AppCompatActivity {
     }
 
     private void AddTODOTask(String titleText) {
-        String taskId = taskRef.child("tasks").push().getKey();
-        TODOTask newTask = new TODOTask(taskId, titleText,"2020-20-20 : 20:20","desc",false);
-        taskRef.child("tasks").child(taskId).setValue(newTask);
+        String taskId = listRef.child("tasks").push().getKey();
+        TODOTask newTask = new TODOTask(taskId, titleText, "2020-20-20 : 20:20", "desc", false);
+        listRef.child("tasks").child(taskId).setValue(newTask);
         Toast.makeText(TasksActivity.this, "to-do task has been added successfully", Toast.LENGTH_SHORT).show();
     }
 }

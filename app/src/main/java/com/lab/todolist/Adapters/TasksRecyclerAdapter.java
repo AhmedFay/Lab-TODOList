@@ -2,6 +2,7 @@ package com.lab.todolist.Adapters;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.DatabaseReference;
 import com.lab.todolist.Models.TODOList;
 import com.lab.todolist.Models.TODOTask;
 import com.lab.todolist.R;
@@ -22,10 +24,12 @@ public class TasksRecyclerAdapter extends RecyclerView.Adapter<TasksRecyclerAdap
 
     Activity activity;
     TODOList data;
+    DatabaseReference listRef;
 
-    public TasksRecyclerAdapter(Activity activity, TODOList data) {
+    public TasksRecyclerAdapter(Activity activity, TODOList data, DatabaseReference listRef) {
         this.activity = activity;
         this.data = data;
+        this.listRef = listRef;
     }
 
     @NonNull
@@ -42,16 +46,20 @@ public class TasksRecyclerAdapter extends RecyclerView.Adapter<TasksRecyclerAdap
         TODOTask task = data.getTasks().get(position);
         holder.tv_task_title.setText(task.getTitle());
         holder.cb_task_check.setChecked(task.isChecked());
+
         if(task.isChecked()){
-            holder.tv_task_title.setPaintFlags(holder.tv_task_title.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            holder.tv_task_title.setTextColor(activity.getColor(R.color.check_text));
+            holder.tv_task_title.setBackground(activity.getDrawable(R.drawable.checket_text_line));
         }
 
         holder.cb_task_check.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            data.getTasks().get(position).setChecked(isChecked);
+            listRef.child("tasks").child(task.getId()).child("checked").setValue(isChecked);
             if(isChecked){
-                holder.tv_task_title.setPaintFlags(holder.tv_task_title.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                holder.tv_task_title.setTextColor(activity.getColor(R.color.check_text));
+                holder.tv_task_title.setBackground(activity.getDrawable(R.drawable.checket_text_line));
             } else {
-                holder.tv_task_title.setPaintFlags(holder.tv_task_title.getPaintFlags() & (~ Paint.STRIKE_THRU_TEXT_FLAG));
+                holder.tv_task_title.setTextColor(activity.getColor(R.color.uncheck_text));
+                holder.tv_task_title.setBackground(null);
             }
         });
 

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -16,7 +15,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -39,19 +37,16 @@ import java.util.ArrayList;
 
 public class ListsActivity extends AppCompatActivity {
 
-    private FirebaseAuth firebaseAuth;
-    private FirebaseUser currentUser;
-    private DatabaseReference listRef;
-    private String uid;
-
+    public ArrayList<TODOList> lists = new ArrayList<>();
     EditText et_list_create;
     RecyclerView listRecycler;
-
     ListsRecyclerAdapter listsRecyclerAdapter;
     TaskSearchAdapter taskSearchAdapter;
-
-    public ArrayList<TODOList> lists = new ArrayList<>();
     ArrayList<TODOTaskSearch> searches = new ArrayList<>();
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUser currentUser;
+    private DatabaseReference listsRef;
+    private String uid;
     private ProgressBar pc_loading;
     private EditText et_search;
     private TextView tv_listTitle;
@@ -69,7 +64,7 @@ public class ListsActivity extends AppCompatActivity {
             finish();
         }
         uid = currentUser.getUid();
-        listRef = FirebaseDatabase.getInstance().getReference("Users").child(uid).child("lists");
+        listsRef = FirebaseDatabase.getInstance().getReference("Users").child(uid).child("lists");
 
         listRecycler = findViewById(R.id.listRecycler);
         ListPaddingDecoration dividerItemDecoration = new ListPaddingDecoration(this);
@@ -98,32 +93,33 @@ public class ListsActivity extends AppCompatActivity {
         pc_loading = findViewById(R.id.pc_loading);
         pc_loading.bringToFront();
         pc_loading.setVisibility(View.VISIBLE);
-        listRef.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        pc_loading.setVisibility(View.VISIBLE);
-                        lists.clear();
+        listsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                pc_loading.setVisibility(View.VISIBLE);
+                lists.clear();
 
-                        for(DataSnapshot snapshot: dataSnapshot.getChildren()){
-                            TODOList todoList = new TODOList();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    TODOList todoList = new TODOList();
 
-                            todoList.setId((String)snapshot.child("id").getValue());
-                            todoList.setTitle((String)snapshot.child("title").getValue());
-                            if (snapshot.child("tasks").exists()) {
-                                for (DataSnapshot tasksSnapshot : snapshot.child("tasks").getChildren()) {
-                                    todoList.getTasks().add(tasksSnapshot.getValue(TODOTask.class));
-                                }
-                            }
-
-                            lists.add(todoList);
+                    todoList.setId((String) snapshot.child("id").getValue());
+                    todoList.setTitle((String) snapshot.child("title").getValue());
+                    if (snapshot.child("tasks").exists()) {
+                        for (DataSnapshot tasksSnapshot : snapshot.child("tasks").getChildren()) {
+                            todoList.getTasks().add(tasksSnapshot.getValue(TODOTask.class));
                         }
-                        pc_loading.setVisibility(View.GONE);
-                        listsRecyclerAdapter.notifyDataSetChanged();
                     }
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                    }
-                });
+
+                    lists.add(todoList);
+                }
+                pc_loading.setVisibility(View.GONE);
+                listsRecyclerAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+            }
+        });
 
         tv_listTitle = findViewById(R.id.tv_listTitle);
         et_search = findViewById(R.id.et_search);
@@ -142,10 +138,7 @@ public class ListsActivity extends AppCompatActivity {
                 } else {
                     et_list_create.setVisibility(View.GONE);
                     tv_listTitle.setText("Results:");
-                    for (TODOTaskSearch f:search(searchText)) {
-                        Log.e("Error",f.getTaskTitle());
-                    }
-                    taskSearchAdapter = new TaskSearchAdapter(ListsActivity.this, search(searchText));
+                    taskSearchAdapter = new TaskSearchAdapter(ListsActivity.this, search(searchText), listsRef);
                     listRecycler.setAdapter(taskSearchAdapter);
                 }
             }
@@ -163,7 +156,7 @@ public class ListsActivity extends AppCompatActivity {
                 return true;
             }
         });
-        
+
         ImageButton btn_back = findViewById(R.id.btn_back);
         btn_back.setOnClickListener(view -> {
             onBackPressed();
@@ -178,9 +171,9 @@ public class ListsActivity extends AppCompatActivity {
     }
 
     public void AddTODOList(String titleText) {
-        String listId = listRef.push().getKey();
+        String listId = listsRef.push().getKey();
         TODOList newList = new TODOList(listId, titleText);
-        listRef.child(listId).setValue(newList);
+        listsRef.child(listId).setValue(newList);
         Toast.makeText(ListsActivity.this, "to-do list has been added successfully", Toast.LENGTH_SHORT).show();
     }
 
@@ -192,8 +185,8 @@ public class ListsActivity extends AppCompatActivity {
             int tasksCount = list.getTasks().size();
             for (int j = 0; j < tasksCount; j++) {
                 TODOTask task = list.getTasks().get(j);
-                if (task.getTitle().toLowerCase().contains(text.toLowerCase())){
-                    result.add(new TODOTaskSearch(list.getId(),task.getId(),list.getTitle(),task.getTitle(),task.isChecked()));
+                if (task.getTitle().toLowerCase().contains(text.toLowerCase())) {
+                    result.add(new TODOTaskSearch(list.getId(), task.getId(), list.getTitle(), task.getTitle(), task.isChecked()));
                 }
             }
         }

@@ -30,6 +30,7 @@
         android:layout_height="20dp"
         android:background="@drawable/label_background"
         android:gravity="center"
+        android:layout_marginStart="18dp"
         android:text="Personal"
         android:textAllCaps="true"
         android:textColor="@color/white"

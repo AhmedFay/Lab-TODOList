@@ -13,6 +13,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.DatabaseReference;
 import com.lab.todolist.ListsActivity;
 import com.lab.todolist.Models.TODOTaskSearch;
 import com.lab.todolist.R;
@@ -24,10 +25,12 @@ public class TaskSearchAdapter extends RecyclerView.Adapter<TaskSearchAdapter.se
 
     Activity activity;
     ArrayList<TODOTaskSearch> data = new ArrayList<TODOTaskSearch>();
+    DatabaseReference listsRef;
 
-    public TaskSearchAdapter(Activity activity, ArrayList<TODOTaskSearch> data) {
+    public TaskSearchAdapter(Activity activity, ArrayList<TODOTaskSearch> data, DatabaseReference listsRef) {
         this.activity = activity;
         this.data = data;
+        this.listsRef = listsRef;
     }
 
     @NonNull
@@ -46,23 +49,27 @@ public class TaskSearchAdapter extends RecyclerView.Adapter<TaskSearchAdapter.se
         holder.tv_list_title.setText(search_task.getListTitle());
         holder.tv_task_title.setText(search_task.getTaskTitle());
         holder.cb_task_check.setChecked(search_task.isChecked());
+
         if(search_task.isChecked()){
-            holder.tv_task_title.setPaintFlags(holder.tv_task_title.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            holder.tv_task_title.setTextColor(activity.getColor(R.color.check_text));
+            holder.tv_task_title.setBackground(activity.getDrawable(R.drawable.checket_text_line));
         }
 
         holder.cb_task_check.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            search_task.setChecked(isChecked);
+            listsRef.child(search_task.getListId()).child("tasks").child(search_task.getTaskId()).child("checked").setValue(isChecked);
             if(isChecked){
-                holder.tv_task_title.setPaintFlags(holder.tv_task_title.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                holder.tv_task_title.setTextColor(activity.getColor(R.color.check_text));
+                holder.tv_task_title.setBackground(activity.getDrawable(R.drawable.checket_text_line));
             } else {
-                holder.tv_task_title.setPaintFlags(holder.tv_task_title.getPaintFlags() & (~ Paint.STRIKE_THRU_TEXT_FLAG));
+                holder.tv_task_title.setTextColor(activity.getColor(R.color.uncheck_text));
+                holder.tv_task_title.setBackground(null);
             }
         });
 
         holder.itemView.setOnClickListener(view -> {
             Intent intent = new Intent(activity, ViewTaskActivity.class);
-            intent.putExtra("listId", data.get(position).getListId());
-            intent.putExtra("taskId", data.get(position).getTaskId());
+            intent.putExtra("listId", search_task.getListId());
+            intent.putExtra("taskId", search_task.getTaskId());
             activity.startActivity(intent);
         });
 
